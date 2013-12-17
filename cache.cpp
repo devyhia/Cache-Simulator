@@ -1,9 +1,9 @@
 #include <iostream>
 
 #define CACHE_LINES		2048
-#define DM_INDEX_SHIFT	2
+#define DM_INDEX_SHIFT	3
 #define DM_INDEX_AND	0x7FF
-#define DM_TAG_SHIFT	13
+#define DM_TAG_SHIFT	14
 #define DM_TAG_AND		0xFF
 #define FA_TAG_SHIFT	3
 #define FA_TAG_AND		0x1FFFF
@@ -80,7 +80,6 @@ cacheResType cacheSimDM(unsigned int addr)
 // Fully Associative Cache Simulator
 cacheResType cacheSimFA(unsigned int addr, int policy=0)
 {	
-	// int byte_offset = addr & 0x7;
 	int tag = (addr >> FA_TAG_SHIFT) & FA_TAG_AND;
 	int index = 0;
 	for (int i = 0; i < CACHE_LINES; i++)
@@ -190,5 +189,5 @@ int main()
 		cout << addr <<" ("<< msg[r] <<")\n";
 	}
 
-	cout << "Hit Count : " << ((float)cnt_hit/INST_COUNT)*100 << endl << "Miss Count : " << ((float)cnt_miss/INST_COUNT)*100 << endl;
+	cout << "Hit % : " << ((float)cnt_hit/INST_COUNT)*100 << endl << "Miss % : " << ((float)cnt_miss/INST_COUNT)*100 << endl;
 }
