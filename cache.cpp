@@ -1,5 +1,14 @@
 #include <iostream>
 
+#define CACHE_LINES		2048
+#define DM_INDEX_SHIFT	2
+#define DM_INDEX_AND	0x7FF
+#define DM_TAG_SHIFT	13
+#define DM_TAG_AND		0xFF
+#define FA_TAG_SHIFT	3
+#define FA_TAG_AND		0x1FFFF
+#define INST_COUNT		100000
+
 using namespace std;
 
 enum cacheResType {MISS=0, HIT=1};
@@ -14,13 +23,12 @@ struct DM_Obj
 // The size of the cache: 2^14 ( 16 KByte )
 // Bytes / Line: 2^3 ( 8 bytes )
 // # of lines : ( 2^14 / 2^3 ) = 2^11 lines
-bool dm_cache_valid[2048];
-int dm_cache_tag[2048];
+bool dm_cache_valid[CACHE_LINES];
+int dm_cache_tag[CACHE_LINES];
 
 // Create the cache of Fully Associative
-int fa_cache_tag[2048];
-bool fa_cache_valid[2048];
-// char fa_cache_words[2048][8]; 
+int fa_cache_tag[CACHE_LINES];
+bool fa_cache_valid[CACHE_LINES];
 
 int fa_last_tag_idx = 0;
 int fa_lru_idx = 0;
@@ -52,8 +60,8 @@ unsigned int memGenLoop2()
 cacheResType cacheSimDM(unsigned int addr)
 {	
 	// We're supposing the address to be 1MBytes ( 2^20 bits )
-	int index = (addr >> 2) & 0x7FF;
-	int tag = (addr >> 13) & 0xFF;
+	int index = (addr >> DM_INDEX_SHIFT) & DM_INDEX_AND;
+	int tag = (addr >> DM_TAG_SHIFT) & DM_TAG_AND;
 
 	if(dm_cache_valid[index]) {
 		if(dm_cache_tag[index] == tag)
@@ -76,13 +84,12 @@ cacheResType cacheSimDM(unsigned int addr)
 }
 
 // Fully Associative Cache Simulator
-cacheResType cacheSimFA(unsigned int addr)
+cacheResType cacheSimFA(unsigned int addr, int policy=0)
 {	
-	int byte_offset = addr & 0x7;
-	int tag = (addr >> 3) & 0x1FFFF;
+	// int byte_offset = addr & 0x7;
+	int tag = (addr >> FA_TAG_SHIFT) & FA_TAG_AND;
 	int index = 0;
-	// cout << "byte_offset : " << byte_offset << endl << "Tag : " << tag << endl; 
-	for (int i = 0; i < 2048; i++)
+	for (int i = 0; i < CACHE_LINES; i++)
 	{
 		if (fa_cache_tag[i] == tag)
 		{
@@ -93,18 +100,15 @@ cacheResType cacheSimFA(unsigned int addr)
 			break;
 		}
 	}
-	// cout << "Index : " << index << endl;
 
 	if(index > fa_last_tag_idx) { // Tag wasn't found
-		if(index >= 2048) { // This should never be greater than 2048 ( but no harm in making sure )
-			// Using Random Replacement
-			// index = rand() % 2048;
-
-			// Using FIFO
-			// index = 0;
-
-			// Using LRU
-			index = fa_lru_idx;
+		if(index >= CACHE_LINES) { // This should never be greater than 2048 ( but no harm in making sure )
+			if(policy == 0) // Using Random Replacement
+				index = rand() % CACHE_LINES;
+			else if(policy == 1) // Using FIFO
+				index = 0;
+			else // Using LRU
+				index = fa_lru_idx;
 		}
 
 		fa_last_tag_idx = index;
@@ -154,6 +158,12 @@ int main()
 	int type;
 	cin >> type;
 
+	int policy = 0;
+	if(type == 1) { // Fully Associative
+		cout << "Please Choose Replacement Policy : " << endl << "0 : Random" << endl << "1 : FIFO" << endl << "2 : LRU" << endl;
+		cin >> policy;
+	}
+
 	if(type < 0 || type > 1 || func < 0 || func > 3) {
 		cout << "Invalid Parameters" << endl;
 		return 0;
@@ -162,7 +172,7 @@ int main()
 	unsigned int addr;
 	cout << (type == 0 ? "Direct Mapped" : "Fully Associative") << " Cache Simulator\n";
 
-	for(;inst<100000;inst++)
+	for(;inst<INST_COUNT;inst++)
 	{
 		if(func == 0)
 				addr =  memGenRandom();
@@ -176,7 +186,7 @@ int main()
 		if(type == 0)
 				r = cacheSimDM(addr);
 		else if(type == 1)
-				r = cacheSimFA(addr);
+				r = cacheSimFA(addr, policy);
 		
 		if(r == MISS) 
 			cnt_miss++;
@@ -185,6 +195,6 @@ int main()
 
 		cout << addr <<" ("<< msg[r] <<")\n";
 	}
-	cout << "type : " << type << " - func : " << func << endl;
-	cout << "Hit Count : " << cnt_hit << endl << "Miss Count : " << cnt_miss << endl;
+
+	cout << "Hit Count : " << ((float)cnt_hit/INST_COUNT)*100 << endl << "Miss Count : " << ((float)cnt_miss/INST_COUNT)*100 << endl;
 }
