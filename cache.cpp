@@ -13,12 +13,6 @@ using namespace std;
 
 enum cacheResType {MISS=0, HIT=1};
 
-struct DM_Obj 
-{
-	bool Valid = false; // Default Invalid
-	int Tag;
-};
-
 // Create the cache of Direct Mapped Objects 
 // The size of the cache: 2^14 ( 16 KByte )
 // Bytes / Line: 2^3 ( 8 bytes )
