@@ -1,12 +1,12 @@
 #include <iostream>
 
-#define CACHE_LINES		2048
-#define DM_INDEX_SHIFT	3
-#define DM_INDEX_AND	0x7FF
+#define CACHE_LINES		256
+#define DM_INDEX_SHIFT	6
+#define DM_INDEX_AND	0xFF
 #define DM_TAG_SHIFT	14
-#define DM_TAG_AND		0xFF
-#define FA_TAG_SHIFT	3
-#define FA_TAG_AND		0x1FFFF
+#define DM_TAG_AND		0x3F
+#define FA_TAG_SHIFT	6
+#define FA_TAG_AND		0x3FFF
 #define INST_COUNT		100000
 
 using namespace std;
